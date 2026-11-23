@@ -1,0 +1,26 @@
+# Planer – przypomnienia push (Cloudflare Workers, darmowy plan: cron co minutę + baza D1).
+# Instrukcja krok po kroku: README.pl.md →„Przypomnienia push (Cloudflare)”.
+name = "planer-push"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+# co minutę sprawdza, czy nadszedł czas któregoś przypomnienia
+[triggers]
+crons = ["* * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "planer"
+# wpisz identyfikator z `npx wrangler d1 create planer`
+database_id = "6e4f2f30-f0e5-4282-8aa3-9ba7ebb3d91f"
+migrations_dir = "migrations"
+
+[vars]
+# identyfikator projektu Firebase (ten sam co VITE_FIREBASE_PROJECT_ID w .env)
+FIREBASE_PROJECT_ID = "planer-1493b"
+# klucz publiczny z `npm run vapid` (klucz prywatny to sekret: npx wrangler secret put VAPID_PRIVATE_KEY --config worker/wrangler.toml)
+VAPID_PUBLIC_KEY = "BJO0n-AsitGJrQ9ZGyQChWkjFckQBMRW_s_y40qry_aDZuUl7E8TZEpSsKgNHsTeRRJoQO9qIRZmyT7i1SVz1Cg"
+# adres Twojej aplikacji – usługi push (Google, Apple, Mozilla) traktują go jako kontakt
+VAPID_SUBJECT = "https://planer-1493b.web.app"
+# skąd wolno wołać Workera (oddzielone przecinkami)
+ALLOWED_ORIGINS = "https://planer-1493b.web.app,https://planer-1493b.firebaseapp.com,http://localhost:5173,http://localhost:4173"

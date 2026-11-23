@@ -1,0 +1,32 @@
+# dependencies and build output
+node_modules
+dist
+dev-dist
+
+# local config and secrets (only .env.example is committed)
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+*.pem
+*.key
+*.p12
+serviceAccount*.json
+*-firebase-adminsdk-*.json
+
+# Firebase / Wrangler local state and caches
+.firebase
+.wrangler
+
+# logs
+*.log
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# editor / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db

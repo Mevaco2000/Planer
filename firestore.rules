@@ -1,0 +1,59 @@
+rules_version = '2';
+
+// Model danych (każdy widzi wyłącznie swoje dane):
+//   users/{uid}                 – ustawienia (godzina porannych przypomnień, domyślne przypomnienie, pary „to różne zadania”…)
+//   users/{uid}/groups/{id}     – grupy projektów (nazwa, kolejność)
+//   users/{uid}/projects/{id}   – projekty (nazwa, kolor, grupa, „po kolei”)
+//   users/{uid}/stages/{id}     – etapy projektów (projekt, nazwa, kolejność, termin) – poziom między projektem a zadaniem
+//   users/{uid}/tasks/{id}      – zadania (termin, godzina, czas trwania, priorytet, status, podzadania, powtarzanie,
+//                                 przypomnienie, kolejność kroku w projekcie, etap, większe zadania, na które wpływa)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function shortString(v, max) {
+      return v is string && v.size() <= max;
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /tasks/{taskId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && shortString(request.resource.data.title, 500)
+          && shortString(request.resource.data.notes, 20000)
+          && request.resource.data.status in ['todo', 'doing', 'done']
+          && request.resource.data.priority in [1, 2, 3, 4]
+          && request.resource.data.subtasks is list
+          && request.resource.data.subtasks.size() <= 100
+          // starsze zadania nie mają tych pól
+          && request.resource.data.get('parentIds', []) is list
+          && request.resource.data.get('parentIds', []).size() <= 50;
+      }
+
+      match /projects/{projectId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && shortString(request.resource.data.name, 100)
+          && shortString(request.resource.data.color, 20);
+      }
+
+      match /stages/{stageId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && shortString(request.resource.data.name, 100)
+          && shortString(request.resource.data.projectId, 100);
+      }
+
+      match /groups/{groupId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && shortString(request.resource.data.name, 100);
+      }
+    }
+  }
+}
